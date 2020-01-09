@@ -28,6 +28,10 @@ const UserSchema = new mongoose.Schema({
   gaia_points: {
     type: Number,
     default: 0
+  },
+  date: {
+    type: Date,
+    default: Date.now
   }
 });
 
