@@ -5,8 +5,10 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 const { check, validationResult } = require("express-validator");
+const auth = require("../../middleware/auth");
 
 const User = require("../../models/User");
+
 // @route POST api/users
 // @desc Register user
 // @access Public
@@ -83,6 +85,50 @@ router.post(
       );
 
       //   res.send("User Registered");
+    } catch (err) {
+      console.log(err.message);
+      res.status(500).send("Server error");
+    }
+  }
+);
+
+// @route PUT api/users
+// @desc Update my user
+// @access Private
+
+router.put(
+  "/",
+  [auth, [check("email", "Please include a valid email").isEmail()]],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { name, email, address } = req.body;
+
+    try {
+      // Check if user exist
+      let user = await User.findById(req.user.id);
+
+      if (!user) return res.status(404).json({ msg: "User not found" });
+
+      if (user._id.toString() !== req.user.id)
+        return res.status(401).json({ msg: "User not authorized" });
+
+      if (address) user.address = address;
+      if (name) user.name = name;
+      if (email) {
+        const avatar = gravatar.url(email, {
+          s: "200",
+          d: "mm"
+        });
+        user.email = email;
+        user.avatar = avatar;
+      }
+
+      await user.save();
+      return res.json(user);
     } catch (err) {
       console.log(err.message);
       res.status(500).send("Server error");
