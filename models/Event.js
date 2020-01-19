@@ -19,7 +19,8 @@ const EventSchema = new Schema({
     required: true
   },
   location: {
-    type: String
+    type: String,
+    required: true
   },
   description: {
     type: String,
@@ -30,13 +31,13 @@ const EventSchema = new Schema({
       user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user"
-      },
-      status: {
-        type: String,
-        enum: ["In Progress", "Completed"]
       }
     }
-  ]
+  ],
+  date: {
+    type: Date,
+    default: Date.now
+  }
 });
 
-module.exports = Challenge = mongoose.model("challenge", EventSchema);
+module.exports = Event = mongoose.model("event", EventSchema);

@@ -34,7 +34,11 @@ const ChallengeSchema = new Schema({
         enum: ["In Progress", "Completed"]
       }
     }
-  ]
+  ],
+  date: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 module.exports = Challenge = mongoose.model("challenge", ChallengeSchema);
