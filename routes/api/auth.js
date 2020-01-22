@@ -4,7 +4,6 @@ const auth = require("../../middleware/auth");
 const User = require("../../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const config = require("config");
 const { check, validationResult } = require("express-validator");
 
 // @route GET api/auth
@@ -63,7 +62,7 @@ router.post(
 
       jwt.sign(
         payload,
-        config.get("jwtSecret"),
+        process.env.jwtSecret,
         { expiresIn: 36000 },
         (err, token) => {
           if (err) throw err;
