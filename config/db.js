@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const config = require("config");
 const db = `mongodb://${process.env.mongoUser}:${process.env.mongoPW}${process.env.mongoURI}`;
 
 const connectDB = async () => {
