@@ -8,7 +8,8 @@
     "start": "node server.js",
     "server": "nodemon server.js",
     "client": "cd client && yarn start",
-    "dev": "concurrently --kill-others-on-fail \"yarn run server\" \"yarn run client\""
+    "dev": "concurrently --kill-others-on-fail \"yarn run server\" \"yarn run client\"",
+    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm build --prefix client"
   },
   "author": "Sellam David & Liad Gez",
   "license": "ISC",
