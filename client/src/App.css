@@ -1,38 +1,69 @@
-.App {
+/* buttons */
+
+.radiant-green-btn {
+  margin-bottom: 2vh !important;
+  border-radius: 7px !important;
+  font-family: Montserrat !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  line-height: 17px;
+  text-transform: uppercase;
+  color: #ffffff !important;
+  width: 256px;
+  height: 54px;
+  background: linear-gradient(180deg, #76ce95 0%, #70cec6 100%);
+}
+
+.radiant-purple-btn {
+  margin-bottom: 2vh !important;
+  border-radius: 7px !important;
+  font-family: Montserrat !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  line-height: 17px;
+  text-transform: uppercase;
+  color: #ffffff !important;
+  width: 256px;
+  height: 54px;
+  background: linear-gradient(180deg, #bc9cff 0%, #8ba4f9 100%);
+}
+
+/* Landing Component */
+
+.landing-btns {
+  margin-top: 10vh;
+}
+
+.landing-logo {
+  margin-top: 15vh;
+}
+
+.landing-logo-img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 80vw;
+}
+
+.landing-quotes {
+  margin-top: 9vh;
+  margin-left: 10vw;
+  margin-right: 10vw;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.quote {
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-style: italic;
+  text-transform: uppercase;
+  margin-bottom: 0;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.quote-author {
+  text-transform: uppercase;
+  font-size: 16px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  margin-top: 0;
 }
