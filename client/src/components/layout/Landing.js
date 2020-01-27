@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import gaiaLogo from "../../images/GAIA-logo.png";
 import Button from "@material-ui/core/Button";
 
@@ -17,8 +18,12 @@ const Landing = () => {
         </p>
         <p className="quote-author">Freeman Dyson</p>
         <div className="landing-btns">
-          <Button className="radiant-green-btn">Be part of the change </Button>
-          <Button className="radiant-purple-btn">Login</Button>
+          <Link to="/register">
+            <Button className="radiant-green-btn">Be part of the change</Button>
+          </Link>
+          <Link to="/login">
+            <Button className="radiant-purple-btn">Login</Button>
+          </Link>
         </div>
       </div>
     </section>

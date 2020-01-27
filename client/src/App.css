@@ -1,3 +1,9 @@
+/* General */
+
+a {
+  text-decoration: none;
+}
+
 /* buttons */
 
 .radiant-green-btn {
@@ -35,7 +41,7 @@
 }
 
 .landing-logo {
-  margin-top: 15vh;
+  margin-top: 13vh;
 }
 
 .landing-logo-img {
@@ -66,4 +72,26 @@
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
   margin-top: 0;
+}
+
+/* login page */
+
+.login-header {
+  font-family: Quicksand;
+  font-style: normal;
+  font-weight: bold;
+  font-size: 24px;
+  line-height: 30px;
+  color: #1f2041;
+  text-align: center;
+  margin-top: 5vh;
+}
+
+.login-form {
+  display: grid;
+  margin: 10vh 5vh;
+}
+
+.login-form input {
+  margin-top: 4vh;
 }
