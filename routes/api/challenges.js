@@ -68,6 +68,40 @@ router.post(
   }
 );
 
+//------------------------------// TO COPY
+// @route Put api/challenges
+// @desc edit a challenge by id
+// @access Private
+
+router.put("/:id",auth,async (req, res) => {
+    try {
+      const challenge_e = await Challenge.findById(req.params.id);
+      if (!challenge_e) return res.status(404).json({ msg: "challenge not found" });
+
+      if (challenge_e.creator.toString() !== req.user.id)
+        return res.status(401).json({ msg: "User not authorized" });
+
+        const title = req.body.title;
+        const category= req.body.category;
+        const description= req.body.description;
+        const gaia_points= req.body.gaia_points;
+
+      if (title) challenge_e.title = title;
+      if (category) challenge_e.category = category;
+      if (description) challenge_e.description=description;
+      if (gaia_points) challenge_e.gaia_points = gaia_points;
+
+      await challenge_e.save();
+      return res.json(challenge_e);
+    } 
+    catch (err) {
+      console.log(err.message);
+      res.status(500).send("Server error");
+    }
+  }
+);
+//------------------------------// TO COPY
+
 // @route GET api/challenges/:id
 // @desc Get an event by ID
 // @access Public
