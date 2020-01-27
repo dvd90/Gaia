@@ -76,11 +76,11 @@ a {
 
 /* login page */
 
-.login-header {
+.header-title {
   font-family: Quicksand;
   font-style: normal;
   font-weight: bold;
-  font-size: 24px;
+  font-size: 25px;
   line-height: 30px;
   color: #1f2041;
   text-align: center;
@@ -94,4 +94,44 @@ a {
 
 .login-form input {
   margin-top: 4vh;
+}
+
+.header-paragraph {
+  font-family: Montserrat;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 16px;
+  line-height: 24px;
+  color: rgba(31, 32, 65, 0.75);
+}
+
+/* Quiz */
+
+.quiz-form label {
+  margin-top: 3vh !important;
+}
+.quiz-btn {
+  margin-top: 9vh;
+}
+
+.quiz-btn button {
+  width: 100% !important;
+}
+
+.header-title-quiz {
+  margin-top: 9vh;
+}
+
+/* Register */
+
+.register-logo {
+  width: 45vw;
+}
+
+.register-logo-high {
+  margin-top: 5vh;
+}
+
+.register-form {
+  margin-top: 1vh;
 }

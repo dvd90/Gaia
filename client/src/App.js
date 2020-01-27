@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Landing from "./components/layout/Landing";
 import Register from "./components/auth/Register";
 import Login from "./components/auth/Login";
+import FormQuiz from "./components/quiz/FormQuiz";
 import "./App.css";
 
 const App = () => (
@@ -12,6 +13,7 @@ const App = () => (
       <Switch>
         <Route exact path="/register" component={Register} />
         <Route exact path="/login" component={Login} />
+        <Route exact path="/quiz" component={FormQuiz} />
       </Switch>
     </Fragment>
   </Router>
