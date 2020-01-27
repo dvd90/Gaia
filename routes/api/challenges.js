@@ -168,4 +168,34 @@ router.delete("/:id", auth, async (req, res) => {
   }
 });
 
+// @route Put api/challenges
+// @desc edit a challenge by id
+// @access Private
+
+router.put("/:id", auth, async (req, res) => {
+  try {
+    const challenge = await Challenge.findById(req.params.id);
+    if (!challenge) return res.status(404).json({ msg: "challenge not found" });
+
+    if (challenge.creator.toString() !== req.user.id)
+      return res.status(401).json({ msg: "User not authorized" });
+
+    const title = req.body.title;
+    const category = req.body.category;
+    const description = req.body.description;
+    const gaia_points = req.body.gaia_points;
+
+    if (title) challenge.title = title;
+    if (category) challenge.category = category;
+    if (description) challenge.description = description;
+    if (gaia_points) challenge.gaia_points = gaia_points;
+
+    await challenge.save();
+    return res.json(challenge);
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;

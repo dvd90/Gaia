@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import gaiaLogo from "../../images/GAIA-logo.png";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
@@ -21,7 +22,9 @@ const Login = () => (
       {/* Need to connect buttons */}
       <div className="landing-btns">
         <Button className="radiant-green-btn">Be part of the change</Button>
-        <Button className="radiant-purple-btn">Login</Button>
+        <Link to="/">
+          <Button className="radiant-purple-btn">Back</Button>
+        </Link>
       </div>
     </form>
   </section>
