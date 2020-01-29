@@ -1,6 +1,13 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+const attendee = {
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user"
+  }
+};
+
 const EventSchema = new Schema({
   creator: {
     type: mongoose.Schema.Types.ObjectId,
@@ -26,14 +33,7 @@ const EventSchema = new Schema({
     type: String,
     required: true
   },
-  attendees: [
-    {
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "user"
-      }
-    }
-  ],
+  attendees: [attendee],
   date: {
     type: Date,
     default: Date.now
