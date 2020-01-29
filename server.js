@@ -12,6 +12,17 @@ connectDB();
 app.use(express.json({ extended: false }));
 app.get("/", (req, res) => res.send("🌍 GAIA 🌍 API Running"));
 
+//TODO CORS !!!!
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  res.set("Content-Type", "application/json");
+  next();
+});
+
 // Define routes
 app.use("/api/auth", require("./routes/api/auth"));
 app.use("/api/users", require("./routes/api/users"));
