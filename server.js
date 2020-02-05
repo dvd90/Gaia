@@ -28,6 +28,7 @@ app.use("/api/auth", require("./routes/api/auth"));
 app.use("/api/users", require("./routes/api/users"));
 app.use("/api/challenges", require("./routes/api/challenges"));
 app.use("/api/events", require("./routes/api/events"));
+app.use("/api/footprint", require("./routes/api/footprintApi"));
 
 // FOR HEROKU DEPLOYMENT (Not Doing it anymore)
 // Serve static assets in production
