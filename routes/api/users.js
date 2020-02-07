@@ -33,7 +33,7 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, password, address } = req.body;
+    const { name, email, password, address, planet_consuption } = req.body;
 
     try {
       // Check if user exist
@@ -50,7 +50,7 @@ router.post(
       });
 
       // Waiting for quiz to update this field
-      const planet_consuption = "3.4";
+      // const planet_consuption = "3.4";
 
       user = new User({
         name,
