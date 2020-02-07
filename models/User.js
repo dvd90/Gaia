@@ -22,7 +22,6 @@ const UserSchema = new Schema({
     type: String,
     required: true
   },
-  // TODO check how to save a float with mongoose
   planet_consuption: {
     type: String,
     default: "1"
