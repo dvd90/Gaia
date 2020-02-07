@@ -79,7 +79,7 @@ router.post(
         (err, token) => {
           if (err) throw err;
           console.log(`${user.name} just created an account 🎉`);
-          return res.json(country);
+          return res.json({ token });
         }
       );
 
