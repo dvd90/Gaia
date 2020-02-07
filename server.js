@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./config/db");
 const app = express();
 const path = require("path");
@@ -8,20 +9,22 @@ const PORT = process.env.PORT || 4000;
 // connect DB
 connectDB();
 
+//TODO CORS !!!!
+app.use(cors());
+
 // Init Middleware
 app.use(express.json({ extended: false }));
 app.get("/", (req, res) => res.send("🌍 GAIA 🌍 API Running"));
 
-//TODO CORS !!!!
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  res.set("Content-Type", "application/json");
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept"
+//   );
+//   res.set("Content-Type", "application/json");
+//   next();
+// });
 
 // Define routes
 app.use("/api/auth", require("./routes/api/auth"));
