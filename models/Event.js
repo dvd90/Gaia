@@ -8,6 +8,16 @@ const attendee = {
   }
 };
 
+const pointSchema = new Schema({
+  type: {
+    type: String,
+    enum: ["Point"]
+  },
+  coordinates: {
+    type: [Number]
+  }
+});
+
 const EventSchema = new Schema({
   creator: {
     type: mongoose.Schema.Types.ObjectId,
@@ -28,6 +38,9 @@ const EventSchema = new Schema({
   location: {
     type: String,
     required: true
+  },
+  coords: {
+    type: pointSchema
   },
   description: {
     type: String,

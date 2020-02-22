@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { check, validationResult } = require("express-validator");
 const auth = require("../../middleware/auth");
-
+const axios = require("axios");
 const User = require("../../models/User");
 const Event = require("../../models/Event");
 
@@ -49,10 +49,22 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
 
     try {
+      console.log("here");
+      // GeoCoding
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        req.body.location
+      )}.json?access_token=${process.env.MAP_BOX_KEY}`;
+      console.log(url);
+
+      const geocoded = await axios.get(url);
+
+      console.log(geocoded.data.features[0].geometry.coordinates);
+
       const newEvent = new Event({
         title: req.body.title,
         location: req.body.location,
         // Dates need to be sent MM-DD-YY
+        coords: geocoded.data.features[0].geometry,
         starts_at: req.body.starts_at,
         ends_at: req.body.ends_at,
         description: req.body.description,
