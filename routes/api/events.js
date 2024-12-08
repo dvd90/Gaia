@@ -23,6 +23,43 @@ router.get("/", async (req, res) => {
   }
 });
 
+//------------------------------// TO COPY
+// @route Put api/events
+// @desc edit a event by id
+// @access Private
+
+
+router.put("/:id",auth,async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ msg: "event not found" });
+
+    if (event.creator.toString() !== req.user.id)
+      return res.status(401).json({ msg: "User not authorized" });
+
+      const title = req.body.title;
+      const starts_at= req.body.starts_at;
+      const ends_at= req.body.ends_at;
+      const location= req.body.location;
+      const description= req.body.description;
+
+
+    if (title) event.title = title;
+    if (starts_at) event.starts_at = starts_at;
+    if (ends_at) event.ends_at = ends_at;
+    if (location) event.location=location;
+    if (description) event.description = description;
+
+    await event.save();
+    return res.json(event);
+  } 
+  catch (err) {
+    console.log(err.message);
+    res.status(500).send("Server error");
+  }
+}
+);
+
 // @route POST api/events
 // @desc create a new event
 // @access Private
