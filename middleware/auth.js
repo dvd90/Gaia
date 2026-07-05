@@ -1,8 +1,12 @@
 const jwt = require("jsonwebtoken");
+const { jwtSecret } = require("../utils/generateToken");
 
 module.exports = (req, res, next) => {
-  // Get the token to the header
-  const token = req.header("x-auth-token");
+  // Accept the legacy x-auth-token header or a standard Bearer token
+  const bearer = req.header("authorization");
+  const token =
+    req.header("x-auth-token") ||
+    (bearer && bearer.startsWith("Bearer ") ? bearer.slice(7) : null);
 
   // Check if no token
   if (!token)
@@ -10,7 +14,7 @@ module.exports = (req, res, next) => {
 
   // Verify the token
   try {
-    const decoded = jwt.verify(token, process.env.jwtSecret);
+    const decoded = jwt.verify(token, jwtSecret());
 
     req.user = decoded.user;
     next();

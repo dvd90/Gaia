@@ -3,8 +3,21 @@ const router = express.Router();
 const { check, validationResult } = require("express-validator");
 const auth = require("../../middleware/auth");
 const axios = require("axios");
-const User = require("../../models/User");
 const Event = require("../../models/Event");
+
+const isObjectIdError = err =>
+  err.kind === "ObjectId" || err.name === "CastError";
+
+// Geocode a free-text location with Mapbox; returns a GeoJSON geometry or null
+const geocodeLocation = async location => {
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+    location
+  )}.json?access_token=${process.env.MAP_BOX_KEY}`;
+
+  const geocoded = await axios.get(url);
+  const feature = geocoded.data.features && geocoded.data.features[0];
+  return feature ? feature.geometry : null;
+};
 
 // @route GET api/events
 // @desc get all events
@@ -19,7 +32,7 @@ router.get("/", async (req, res) => {
     res.json(events);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
@@ -40,7 +53,9 @@ router.post(
         .isEmpty(),
       check("description", "description is required")
         .not()
-        .isEmpty()
+        .isEmpty(),
+      check("starts_at", "starts_at must be a valid date").isISO8601(),
+      check("ends_at", "ends_at must be a valid date").isISO8601()
     ]
   ],
   async (req, res) => {
@@ -49,22 +64,17 @@ router.post(
       return res.status(400).json({ errors: errors.array() });
 
     try {
-      console.log("here");
-      // GeoCoding
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-        req.body.location
-      )}.json?access_token=${process.env.MAP_BOX_KEY}`;
-      console.log(url);
+      const coords = await geocodeLocation(req.body.location);
 
-      const geocoded = await axios.get(url);
-
-      console.log(geocoded.data.features[0].geometry.coordinates);
+      if (!coords)
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "Could not locate this address" }] });
 
       const newEvent = new Event({
         title: req.body.title,
         location: req.body.location,
-        // Dates need to be sent MM-DD-YY
-        coords: geocoded.data.features[0].geometry,
+        coords,
         starts_at: req.body.starts_at,
         ends_at: req.body.ends_at,
         description: req.body.description,
@@ -76,7 +86,7 @@ router.post(
       res.json(event);
     } catch (err) {
       console.error(err.message);
-      res.status(500).send("Server Error");
+      res.status(500).json({ msg: "Server Error" });
     }
   }
 );
@@ -94,95 +104,123 @@ router.get("/:id", async (req, res) => {
     res.json(event);
   } catch (err) {
     console.error(err.message);
-    if (err.kind === "ObjectId")
+    if (isObjectIdError(err))
       return res.status(404).json({ msg: "event not found" });
 
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
-// @route PUT api/event/:id/join
-// @desc Join a Event
+// @route PUT api/events/:id/join
+// @desc Join an Event
 // @access Private
 
 router.put("/:id/join", auth, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-    let notExist = true;
-    event.attendees.forEach(obj => {
-      if (obj.user.toString() === req.user.id) {
-        notExist = false;
-      }
-    });
-    if (notExist) {
-      event.attendees.push({ user: req.user.id });
-      await event.save();
 
-      res.json(event);
-    } else {
-      res.json({ msg: "You already joined this event" });
-    }
+    if (!event) return res.status(404).json({ msg: "event not found" });
+
+    const alreadyJoined = event.attendees.some(
+      obj => obj.user.toString() === req.user.id
+    );
+
+    if (alreadyJoined)
+      return res.status(400).json({ msg: "You already joined this event" });
+
+    event.attendees.push({ user: req.user.id });
+    await event.save();
+
+    res.json(event);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    if (isObjectIdError(err))
+      return res.status(404).json({ msg: "event not found" });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
 // @route DELETE api/events/:id
-// @desc Delete a event by ID
+// @desc Delete an event by ID
 // @access Private
 
 router.delete("/:id", auth, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-    // Check user ID
 
     if (!event) return res.status(404).json({ msg: "event not found" });
 
+    // Only the creator can delete an event
     if (event.creator.toString() !== req.user.id)
       return res.status(401).json({ msg: "User not authorized" });
 
-    await event.remove();
+    await event.deleteOne();
 
     res.json({ msg: "event removed" });
   } catch (err) {
     console.error(err.message);
-    if (err.kind === "ObjectId")
+    if (isObjectIdError(err))
       return res.status(404).json({ msg: "event not found" });
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
-// @route Put api/events
-// @desc edit a event by id
+// @route PUT api/events/:id
+// @desc edit an event by id
 // @access Private
 
-router.put("/:id", auth, async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ msg: "event not found" });
+router.put(
+  "/:id",
+  [
+    auth,
+    [
+      check("starts_at", "starts_at must be a valid date")
+        .optional()
+        .isISO8601(),
+      check("ends_at", "ends_at must be a valid date")
+        .optional()
+        .isISO8601()
+    ]
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ errors: errors.array() });
 
-    if (event.creator.toString() !== req.user.id)
-      return res.status(401).json({ msg: "User not authorized" });
+    try {
+      const event = await Event.findById(req.params.id);
+      if (!event) return res.status(404).json({ msg: "event not found" });
 
-    const title = req.body.title;
-    const starts_at = req.body.starts_at;
-    const ends_at = req.body.ends_at;
-    const location = req.body.location;
-    const description = req.body.description;
+      // Only the creator can edit an event
+      if (event.creator.toString() !== req.user.id)
+        return res.status(401).json({ msg: "User not authorized" });
 
-    if (title) event.title = title;
-    if (starts_at) event.starts_at = starts_at;
-    if (ends_at) event.ends_at = ends_at;
-    if (location) event.location = location;
-    if (description) event.description = description;
+      const { title, starts_at, ends_at, location, description } = req.body;
 
-    await event.save();
-    return res.json(event);
-  } catch (err) {
-    console.log(err.message);
-    res.status(500).send("Server error");
+      if (title) event.title = title;
+      if (starts_at) event.starts_at = starts_at;
+      if (ends_at) event.ends_at = ends_at;
+      if (description) event.description = description;
+      if (location && location !== event.location) {
+        // Keep the map pin in sync with the new address
+        const coords = await geocodeLocation(location);
+        if (!coords)
+          return res
+            .status(400)
+            .json({ errors: [{ msg: "Could not locate this address" }] });
+        event.location = location;
+        event.coords = coords;
+      }
+
+      await event.save();
+      return res.json(event);
+    } catch (err) {
+      console.error(err.message);
+      if (isObjectIdError(err))
+        return res.status(404).json({ msg: "event not found" });
+      res.status(500).json({ msg: "Server Error" });
+    }
   }
-});
+);
 
 module.exports = router;

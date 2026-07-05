@@ -1,17 +1,17 @@
 const mongoose = require("mongoose");
-const db = `mongodb://${process.env.mongoUser}:${process.env.mongoPW}${process.env.mongoURI}`;
+
+// Prefer a single MONGO_URI; fall back to the legacy split variables
+const buildUri = () =>
+  process.env.MONGO_URI ||
+  `mongodb://${process.env.mongoUser}:${process.env.mongoPW}${process.env.mongoURI}`;
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(db, {
-      useNewUrlParser: true,
-      useCreateIndex: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(buildUri());
 
     console.log("Mongodb connected...");
   } catch (err) {
-    console.log(err.message);
+    console.error(`MongoDB connection failed: ${err.message}`);
     // exit process
     process.exit(1);
   }
