@@ -2,21 +2,22 @@ const express = require("express");
 const router = express.Router();
 const auth = require("../../middleware/auth");
 const User = require("../../models/User");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { check, validationResult } = require("express-validator");
+const { generateToken } = require("../../utils/generateToken");
 
 // @route GET api/auth
-// @desc Test route
-// @access Public
+// @desc Get the logged-in user
+// @access Private
 
 router.get("/", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ msg: "User not found" });
     res.json(user);
   } catch (err) {
-    console.log(err.message);
-    res.status(500).send("Server Error");
+    console.error(err.message);
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
@@ -40,7 +41,7 @@ router.post(
 
     try {
       // Check if user exist
-      let user = await User.findOne({ email });
+      const user = await User.findOne({ email });
 
       if (!user)
         return res
@@ -56,22 +57,10 @@ router.post(
           .json({ errors: [{ msg: "Invalid Credentials" }] });
 
       // Return jsonwebtoken
-      const payload = {
-        user: { id: user.id }
-      };
-
-      jwt.sign(
-        payload,
-        process.env.jwtSecret,
-        { expiresIn: 36000 },
-        (err, token) => {
-          if (err) throw err;
-          return res.json({ token });
-        }
-      );
+      return res.json({ token: generateToken(user.id) });
     } catch (err) {
-      console.log(err.message);
-      res.status(500).send("Server error");
+      console.error(err.message);
+      res.status(500).json({ msg: "Server Error" });
     }
   }
 );

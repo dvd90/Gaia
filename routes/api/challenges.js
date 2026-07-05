@@ -6,6 +6,9 @@ const auth = require("../../middleware/auth");
 const User = require("../../models/User");
 const Challenge = require("../../models/Challenge");
 
+const isObjectIdError = err =>
+  err.kind === "ObjectId" || err.name === "CastError";
+
 // @route GET api/challenges
 // @desc get all challenges
 // @access Public
@@ -19,7 +22,7 @@ router.get("/", async (req, res) => {
     res.json(challenges);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
@@ -41,7 +44,7 @@ router.post(
       check("description", "description is required")
         .not()
         .isEmpty(),
-      check("gaia_points", "gaia_point need to be positive").isInt({ min: 1 })
+      check("gaia_points", "gaia_points need to be positive").isInt({ min: 1 })
     ]
   ],
   async (req, res) => {
@@ -63,13 +66,13 @@ router.post(
       res.json(challenge);
     } catch (err) {
       console.error(err.message);
-      res.status(500).send("Server Error");
+      res.status(500).json({ msg: "Server Error" });
     }
   }
 );
 
 // @route GET api/challenges/:id
-// @desc Get an event by ID
+// @desc Get a challenge by ID
 // @access Public
 
 router.get("/:id", async (req, res) => {
@@ -81,10 +84,10 @@ router.get("/:id", async (req, res) => {
     res.json(challenge);
   } catch (err) {
     console.error(err.message);
-    if (err.kind === "ObjectId")
+    if (isObjectIdError(err))
       return res.status(404).json({ msg: "challenge not found" });
 
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
@@ -95,23 +98,25 @@ router.get("/:id", async (req, res) => {
 router.put("/:id/join", auth, async (req, res) => {
   try {
     const challenge = await Challenge.findById(req.params.id);
-    let notExist = true;
-    challenge.joined_by.forEach(obj => {
-      if (obj.user.toString() === req.user.id) {
-        notExist = false;
-      }
-    });
-    if (notExist) {
-      challenge.joined_by.push({ user: req.user.id, status: "In Progress" });
-      await challenge.save();
 
-      res.json(challenge);
-    } else {
-      res.json({ msg: "You already joined this challenge" });
-    }
+    if (!challenge) return res.status(404).json({ msg: "challenge not found" });
+
+    const alreadyJoined = challenge.joined_by.some(
+      obj => obj.user.toString() === req.user.id
+    );
+
+    if (alreadyJoined)
+      return res.status(400).json({ msg: "You already joined this challenge" });
+
+    challenge.joined_by.push({ user: req.user.id, status: "In Progress" });
+    await challenge.save();
+
+    res.json(challenge);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    if (isObjectIdError(err))
+      return res.status(404).json({ msg: "challenge not found" });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
@@ -123,23 +128,34 @@ router.put("/:id/completed", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const challenge = await Challenge.findById(req.params.id);
-    challenge.joined_by.forEach(obj => {
-      if (obj.user.toString() === req.user.id) {
-        // Add Gaia point to User
-        if (obj.status !== "Completed") {
-          user.gaia_points += challenge.gaia_points;
-          obj.status = "Completed";
-        } else {
-          res.json({ msg: "Challenge already completed" });
-        }
-      }
-    });
+
+    if (!challenge) return res.status(404).json({ msg: "challenge not found" });
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    const joined = challenge.joined_by.find(
+      obj => obj.user.toString() === req.user.id
+    );
+
+    if (!joined)
+      return res
+        .status(400)
+        .json({ msg: "You must join this challenge before completing it" });
+
+    if (joined.status === "Completed")
+      return res.status(400).json({ msg: "Challenge already completed" });
+
+    // Add Gaia points to User
+    joined.status = "Completed";
+    user.gaia_points += challenge.gaia_points;
+
     await challenge.save();
     await user.save();
     res.json(challenge);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send("Server Error");
+    if (isObjectIdError(err))
+      return res.status(404).json({ msg: "challenge not found" });
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
@@ -150,10 +166,10 @@ router.put("/:id/completed", auth, async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
   try {
     const challenge = await Challenge.findById(req.params.id);
-    // Check user ID
 
     if (!challenge) return res.status(404).json({ msg: "challenge not found" });
 
+    // Only the creator can delete a challenge
     if (challenge.creator.toString() !== req.user.id)
       return res.status(401).json({ msg: "User not authorized" });
 
@@ -162,40 +178,56 @@ router.delete("/:id", auth, async (req, res) => {
     res.json({ msg: "challenge removed" });
   } catch (err) {
     console.error(err.message);
-    if (err.kind === "ObjectId")
+    if (isObjectIdError(err))
       return res.status(404).json({ msg: "challenge not found" });
-    res.status(500).send("Server Error");
+    res.status(500).json({ msg: "Server Error" });
   }
 });
 
-// @route Put api/challenges
+// @route PUT api/challenges/:id
 // @desc edit a challenge by id
 // @access Private
 
-router.put("/:id", auth, async (req, res) => {
-  try {
-    const challenge = await Challenge.findById(req.params.id);
-    if (!challenge) return res.status(404).json({ msg: "challenge not found" });
+router.put(
+  "/:id",
+  [
+    auth,
+    [
+      check("gaia_points", "gaia_points need to be positive")
+        .optional()
+        .isInt({ min: 1 })
+    ]
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty())
+      return res.status(400).json({ errors: errors.array() });
 
-    if (challenge.creator.toString() !== req.user.id)
-      return res.status(401).json({ msg: "User not authorized" });
+    try {
+      const challenge = await Challenge.findById(req.params.id);
+      if (!challenge)
+        return res.status(404).json({ msg: "challenge not found" });
 
-    const title = req.body.title;
-    const category = req.body.category;
-    const description = req.body.description;
-    const gaia_points = req.body.gaia_points;
+      // Only the creator can edit a challenge
+      if (challenge.creator.toString() !== req.user.id)
+        return res.status(401).json({ msg: "User not authorized" });
 
-    if (title) challenge.title = title;
-    if (category) challenge.category = category;
-    if (description) challenge.description = description;
-    if (gaia_points) challenge.gaia_points = gaia_points;
+      const { title, category, description, gaia_points } = req.body;
 
-    await challenge.save();
-    return res.json(challenge);
-  } catch (err) {
-    console.log(err.message);
-    res.status(500).send("Server error");
+      if (title) challenge.title = title;
+      if (category) challenge.category = category;
+      if (description) challenge.description = description;
+      if (gaia_points) challenge.gaia_points = gaia_points;
+
+      await challenge.save();
+      return res.json(challenge);
+    } catch (err) {
+      console.error(err.message);
+      if (isObjectIdError(err))
+        return res.status(404).json({ msg: "challenge not found" });
+      res.status(500).json({ msg: "Server Error" });
+    }
   }
-});
+);
 
 module.exports = router;

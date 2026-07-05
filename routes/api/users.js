@@ -2,11 +2,13 @@ const express = require("express");
 const router = express.Router();
 const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const { check, validationResult } = require("express-validator");
 const auth = require("../../middleware/auth");
+const { generateToken } = require("../../utils/generateToken");
 
 const User = require("../../models/User");
+
+const gravatarUrl = email => gravatar.url(email, { s: "200", d: "mm" });
 
 // @route POST api/users
 // @desc Register user
@@ -43,20 +45,12 @@ router.post(
         return res
           .status(400)
           .json({ errors: [{ msg: "User already exist" }] });
-      // Get user gravatar
-      const avatar = gravatar.url(email, {
-        s: "200",
-        d: "mm"
-      });
-
-      // Waiting for quiz to update this field
-      // const planet_consuption = "3.4";
 
       user = new User({
         name,
         email,
         password,
-        avatar,
+        avatar: gravatarUrl(email),
         address,
         planet_consuption
       });
@@ -67,26 +61,18 @@ router.post(
 
       await user.save();
 
+      console.log(`${user.name} just created an account 🎉`);
+
       // Return jsonwebtoken
-      const payload = {
-        user: { id: user.id }
-      };
-
-      jwt.sign(
-        payload,
-        process.env.jwtSecret,
-        { expiresIn: 36000 },
-        (err, token) => {
-          if (err) throw err;
-          console.log(`${user.name} just created an account 🎉`);
-          return res.json({ token });
-        }
-      );
-
-      //   res.send("User Registered");
+      return res.json({ token: generateToken(user.id) });
     } catch (err) {
-      console.log(err.message);
-      res.status(500).send("Server error");
+      // Duplicate key: another request registered this email first
+      if (err.code === 11000)
+        return res
+          .status(400)
+          .json({ errors: [{ msg: "User already exist" }] });
+      console.error(err.message);
+      res.status(500).json({ msg: "Server Error" });
     }
   }
 );
@@ -97,7 +83,14 @@ router.post(
 
 router.put(
   "/",
-  [auth, [check("email", "Please include a valid email").isEmail()]],
+  [
+    auth,
+    [
+      check("email", "Please include a valid email")
+        .optional()
+        .isEmail()
+    ]
+  ],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -107,30 +100,32 @@ router.put(
     const { name, email, address } = req.body;
 
     try {
-      // Check if user exist
-      let user = await User.findById(req.user.id);
+      const user = await User.findById(req.user.id);
 
       if (!user) return res.status(404).json({ msg: "User not found" });
 
-      if (user._id.toString() !== req.user.id)
-        return res.status(401).json({ msg: "User not authorized" });
-
       if (address) user.address = address;
       if (name) user.name = name;
-      if (email) {
-        const avatar = gravatar.url(email, {
-          s: "200",
-          d: "mm"
-        });
+      if (email && email !== user.email) {
+        // Make sure the new email is not taken by someone else
+        const taken = await User.findOne({ email });
+        if (taken)
+          return res.status(400).json({ msg: "Email already in use" });
+
         user.email = email;
-        user.avatar = avatar;
+        user.avatar = gravatarUrl(email);
       }
 
       await user.save();
-      return res.json(user);
+
+      const safeUser = user.toObject();
+      delete safeUser.password;
+      return res.json(safeUser);
     } catch (err) {
-      console.log(err.message);
-      res.status(500).send("Server error");
+      if (err.code === 11000)
+        return res.status(400).json({ msg: "Email already in use" });
+      console.error(err.message);
+      res.status(500).json({ msg: "Server Error" });
     }
   }
 );
