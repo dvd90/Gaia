@@ -5,97 +5,76 @@
 > “The question that will decide our destiny is not whether we shall expand into space. It is: shall we be one species or a million? A million species will not exhaust the ecological niches that are awaiting the arrival of intelligence.”
 > — Freeman Dyson
 
-Gaia is a community app for reducing your ecological footprint, one challenge at a time. Users can:
+Gaia is a community app for reducing your ecological footprint, one challenge at a time:
 
 - **Take a footprint quiz** — find out how many Earths we'd need if everyone lived like your country does.
 - **Join challenges** — complete eco-challenges (Waste, Energy, Transport) and earn Gaia points.
-- **Attend events** — create and join local eco-events, geocoded and displayed on a Mapbox map.
+- **Attend events** — create and join local eco-events, geocoded and shown on a Mapbox map.
 
-This repository is the REST API. The React client lives in [Gaia_client](https://github.com/dvd90/Gaia_client).
+This is a **monorepo** containing both the API and the web client, managed with
+npm workspaces.
 
-## Tech stack
+## Structure
 
-- Node.js 20+ / Express 5
-- MongoDB + Mongoose 8
-- JWT authentication (bcrypt password hashing), helmet security headers
-- Mapbox Geocoding API for event locations
-- Jest + Supertest test suite (80% coverage enforced)
+```
+gaia/
+├── apps/
+│   ├── api/    → Express 5 + Mongoose 8 REST API   (@gaia/api)
+│   └── web/    → Vite + React 18 client            (@gaia/web)
+├── package.json          # workspace root
+└── DEPLOYMENT.md         # Railway two-service guide
+```
+
+Each app has its own README with detailed docs:
+[`apps/api`](apps/api/README.md) · [`apps/web`](apps/web/README.md).
 
 ## Getting started
 
-1. Install dependencies (Node 20+):
+Requires **Node 20+**. Install everything once from the root:
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-2. Configure the environment:
+Configure the two apps' environments:
 
-   ```bash
-   cp .env.example .env
-   # then edit .env with your MongoDB URI, JWT secret and Mapbox key
-   ```
+```bash
+cp apps/api/.env.example apps/api/.env   # Mongo URI, JWT secret, Mapbox key, CORS origin
+cp apps/web/.env.example apps/web/.env   # API URL, Mapbox token
+```
 
-3. Run the server:
+Run them (two terminals):
 
-   ```bash
-   npm run server   # development, with reload (nodemon)
-   npm start        # production
-   ```
+```bash
+npm run dev:api    # API on http://localhost:4000  (nodemon)
+npm run dev        # web on http://localhost:3000  (Vite)
+```
 
-The API starts on `http://localhost:4000` by default.
+## Scripts (run from the root)
+
+| Script              | What it does                                   |
+| ------------------- | ---------------------------------------------- |
+| `npm run dev`       | Start the web client (Vite dev server)         |
+| `npm run dev:api`   | Start the API with reload (nodemon)            |
+| `npm run build`     | Build the web client to `apps/web/dist`        |
+| `npm test`          | Run **both** test suites with coverage         |
+| `npm run test:api`  | API tests only (Jest)                          |
+| `npm run test:web`  | Web tests only (Vitest)                         |
+| `npm run start:api` | Run the API in production (`node server.js`)   |
+| `npm run start:web` | Serve the built web client (`serve -s dist`)   |
 
 ## Tests
 
-The API is covered by a Jest + Supertest suite with a **minimum 80% coverage
-threshold** enforced (currently ~98%):
+Both apps enforce a **minimum 80% coverage threshold** (currently ~98% API,
+~99% web). `npm test` runs both:
 
-```bash
-npm test          # run all tests with coverage report
-npm run test:watch
-```
+- API: **114** Jest + Supertest tests
+- Web: **96** Vitest + Testing Library tests
 
-## Deploying to Railway
+## Deployment
 
-This repo ships with a `railway.json` (health check on `/health`, restart
-policy). To deploy:
-
-1. Create a new Railway project → **Deploy from GitHub repo** → pick this repo.
-2. Add a **MongoDB** database to the project (Railway template), or use MongoDB
-   Atlas.
-3. Set the service variables:
-   - `MONGO_URI` — reference Railway's `${{ MongoDB.MONGO_URL }}` (or your
-     Atlas URI)
-   - `JWT_SECRET` — a long random string
-   - `MAP_BOX_KEY` — your Mapbox token
-   - `CLIENT_ORIGIN` — the URL of the deployed client (CORS)
-4. Deploy. Railway injects `PORT` automatically; the health check hits
-   `/health`.
-
-## API overview
-
-| Method | Route                          | Access  | Description                          |
-| ------ | ------------------------------ | ------- | ------------------------------------ |
-| POST   | `/api/users`                   | Public  | Register, returns a JWT              |
-| PUT    | `/api/users`                   | Private | Update my profile                    |
-| POST   | `/api/auth`                    | Public  | Login, returns a JWT                 |
-| GET    | `/api/auth`                    | Private | Get the logged-in user               |
-| GET    | `/api/challenges`              | Public  | List challenges                      |
-| POST   | `/api/challenges`              | Private | Create a challenge                   |
-| GET    | `/api/challenges/:id`          | Public  | Get a challenge                      |
-| PUT    | `/api/challenges/:id`          | Private | Edit my challenge                    |
-| PUT    | `/api/challenges/:id/join`     | Private | Join a challenge                     |
-| PUT    | `/api/challenges/:id/completed`| Private | Complete a challenge, earn points    |
-| DELETE | `/api/challenges/:id`          | Private | Delete my challenge                  |
-| GET    | `/api/events`                  | Public  | List events                          |
-| POST   | `/api/events`                  | Private | Create an event (geocodes location)  |
-| GET    | `/api/events/:id`              | Public  | Get an event                         |
-| PUT    | `/api/events/:id`              | Private | Edit my event                        |
-| PUT    | `/api/events/:id/join`         | Private | Join an event                        |
-| DELETE | `/api/events/:id`              | Private | Delete my event                      |
-| GET    | `/api/footprint/:country_id`   | Public  | Country footprint (Earths consumed)  |
-
-Private routes expect the JWT in an `x-auth-token` header (an `Authorization: Bearer <token>` header also works).
+Deployed on Railway as **two services** (API + web) from this one repo — see
+[DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Authors
 

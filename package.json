@@ -1,53 +1,25 @@
 {
-  "name": "gaia",
+  "name": "gaia-monorepo",
   "version": "2.0.0",
-  "description": "Reduce your footprint, one challenge at the time.",
-  "main": "server.js",
+  "private": true,
+  "description": "Gaia — reduce your footprint, one challenge at a time. API + web client.",
+  "author": "Sellam David & Liad Gez",
+  "license": "ISC",
   "engines": {
     "node": ">=20"
   },
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "start": "node server.js",
-    "server": "nodemon server.js",
-    "test": "jest --coverage",
-    "test:watch": "jest --watch"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "collectCoverageFrom": [
-      "app.js",
-      "config/db.js",
-      "middleware/**/*.js",
-      "models/**/*.js",
-      "routes/**/*.js",
-      "utils/**/*.js"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "statements": 80,
-        "branches": 80,
-        "functions": 80,
-        "lines": 80
-      }
-    }
-  },
-  "author": "Sellam David & Liad Gez",
-  "license": "ISC",
-  "dependencies": {
-    "axios": "^1.8.4",
-    "bcryptjs": "^3.0.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^5.1.0",
-    "express-validator": "^7.2.1",
-    "gravatar": "^1.8.2",
-    "helmet": "^8.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.12.1"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.1.9",
-    "supertest": "^7.1.0"
+    "dev": "npm run dev --workspace @gaia/web",
+    "dev:api": "npm run server --workspace @gaia/api",
+    "start:api": "npm run start --workspace @gaia/api",
+    "start:web": "npm run start --workspace @gaia/web",
+    "build": "npm run build --workspace @gaia/web",
+    "build:web": "npm run build --workspace @gaia/web",
+    "test": "npm run test --workspaces --if-present",
+    "test:api": "npm run test --workspace @gaia/api",
+    "test:web": "npm run test --workspace @gaia/web"
   }
 }
