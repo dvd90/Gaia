@@ -15,17 +15,18 @@ This repository is the REST API. The React client lives in [Gaia_client](https:/
 
 ## Tech stack
 
-- Node.js + Express
-- MongoDB + Mongoose
-- JWT authentication (bcrypt password hashing)
+- Node.js 20+ / Express 5
+- MongoDB + Mongoose 8
+- JWT authentication (bcrypt password hashing), helmet security headers
 - Mapbox Geocoding API for event locations
+- Jest + Supertest test suite (80% coverage enforced)
 
 ## Getting started
 
-1. Install dependencies:
+1. Install dependencies (Node 20+):
 
    ```bash
-   yarn install
+   npm install
    ```
 
 2. Configure the environment:
@@ -38,11 +39,38 @@ This repository is the REST API. The React client lives in [Gaia_client](https:/
 3. Run the server:
 
    ```bash
-   yarn server   # development, with reload (nodemon)
-   npm start     # production
+   npm run server   # development, with reload (nodemon)
+   npm start        # production
    ```
 
 The API starts on `http://localhost:4000` by default.
+
+## Tests
+
+The API is covered by a Jest + Supertest suite with a **minimum 80% coverage
+threshold** enforced (currently ~98%):
+
+```bash
+npm test          # run all tests with coverage report
+npm run test:watch
+```
+
+## Deploying to Railway
+
+This repo ships with a `railway.json` (health check on `/health`, restart
+policy). To deploy:
+
+1. Create a new Railway project → **Deploy from GitHub repo** → pick this repo.
+2. Add a **MongoDB** database to the project (Railway template), or use MongoDB
+   Atlas.
+3. Set the service variables:
+   - `MONGO_URI` — reference Railway's `${{ MongoDB.MONGO_URL }}` (or your
+     Atlas URI)
+   - `JWT_SECRET` — a long random string
+   - `MAP_BOX_KEY` — your Mapbox token
+   - `CLIENT_ORIGIN` — the URL of the deployed client (CORS)
+4. Deploy. Railway injects `PORT` automatically; the health check hits
+   `/health`.
 
 ## API overview
 

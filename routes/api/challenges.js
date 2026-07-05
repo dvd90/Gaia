@@ -173,7 +173,7 @@ router.delete("/:id", auth, async (req, res) => {
     if (challenge.creator.toString() !== req.user.id)
       return res.status(401).json({ msg: "User not authorized" });
 
-    await challenge.remove();
+    await challenge.deleteOne();
 
     res.json({ msg: "challenge removed" });
   } catch (err) {

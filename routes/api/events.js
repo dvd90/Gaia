@@ -154,7 +154,7 @@ router.delete("/:id", auth, async (req, res) => {
     if (event.creator.toString() !== req.user.id)
       return res.status(401).json({ msg: "User not authorized" });
 
-    await event.remove();
+    await event.deleteOne();
 
     res.json({ msg: "event removed" });
   } catch (err) {
